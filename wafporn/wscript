@@ -1,0 +1,68 @@
+top = '.'
+out = 'build'
+
+from waflib import Build
+
+def configure(ctx):
+    ctx.find_program('gcc', var='CC')
+    ctx.env.CFLAGS = ['-c']
+
+def build(ctx):
+    ctx.post_mode = Build.POST_LAZY
+    #from waflib.Task import Task
+    #class obj(Task):
+    #    run_str = '${CC} ${CFLAGS} ${SRC}'
+    #class binz(Task):
+    #    run_str = '${CC} ${SRC} -o kek'
+    #    after = ['obj']
+
+    #obj_tsk = obj(env=ctx.env)
+    #obj_tsk.set_inputs(ctx.path.find_resource('main.c'))
+    #ctx(rule='gcc ${CFLAGS} ${SRC}', source=ctx.path.ant_glob('src/*.c'))
+    ctx(rule='gcc ${CFLAGS} ${SRC}', source='src/main.c src/kek.c')
+    #bin_tsk = binz(env=ctx.env)
+    #bin_tsk.set_inputs('main.o')
+    ctx.add_group()
+    ctx(rule='gcc ${SRC} -o kek', source=ctx.path.ant_glob('build/*.o'))
+    #ctx(rule='gcc ${SRC} -o kek', source='build/main.o build/kek.o')
+    #ctx.add_to_group(obj_tsk)
+    #ctx.add_to_group(bin_tsk)
+
+    #from waflib import TaskGen
+    #TaskGen.declare_chain(
+    #    name = 'a',
+    #    rule = 'gcc ${CFLAGS} ${SRC}',
+    #    ext_in = '.c',
+    #    ext_out = '.o',
+    #    reentrant = False,
+    #)
+    #TaskGen.declare_chain(
+    #    name = 'b',
+    #    rule = 'gcc ${SRC} -o ${TGT}',
+    #    ext_in = '.o',
+    #    ext_out = '.kappa',
+    #    reentrant = False,
+    #)
+    #ctx(source=ctx.path.ant_glob('src/*c'))
+
+
+
+
+
+#top = '.'
+#out = 'build'
+#
+#def configure(ctx):
+#    ctx.load('g++')
+#    ctx.load('src2cpp', tooldir='.')
+#
+#def build(ctx):
+#    ctx.program( 1
+#        source = 'comp.cpp',
+#        target = 'comp')
+#
+#    ctx.add_group() 2
+#
+#    ctx.program(
+#        source = 'main.cpp a.src', 3
+#        target = 'foo')
