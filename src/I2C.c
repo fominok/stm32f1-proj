@@ -18,11 +18,11 @@ void init_I2C1(void)
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
 
     // А вот и настройка I2C
-    i2c.I2C_ClockSpeed = 100000;
+    i2c.I2C_ClockSpeed = 400000;
     i2c.I2C_Mode = I2C_Mode_I2C;
     i2c.I2C_DutyCycle = I2C_DutyCycle_2;
     // Адрес я тут взял первый пришедший в голову
-    i2c.I2C_OwnAddress1 = 0x15;
+    i2c.I2C_OwnAddress1 = 1;
     i2c.I2C_Ack = I2C_Ack_Enable;
     i2c.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
     I2C_Init(I2C1, &i2c);
@@ -35,6 +35,7 @@ void init_I2C1(void)
 
     // Ну и включаем, собственно, модуль I2C1
     I2C_Cmd(I2C1, ENABLE);
+    I2C_Init(I2C1, &i2c);
 }
 
 /*******************************************************************/

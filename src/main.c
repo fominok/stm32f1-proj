@@ -2,7 +2,8 @@
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_tim.h"
-
+#include "I2C.h"
+#include <stdio.h>
 
 GPIO_InitTypeDef gpio_init_kp_out;
 TIM_TimeBaseInitTypeDef tim_init;
@@ -146,15 +147,76 @@ void EXTI9_5_IRQHandler() {
   }
 }
 
+uint8_t decToBcd(uint8_t val)
+{
+  return( (val/10*16) + (val%10) );
+}
+// Convert binary coded decimal to normal decimal numbers
+uint8_t bcdToDec(uint8_t val)
+{
+  return( (val/16*10) + (val%16) );
+}
+
+void setDS3231time(uint8_t second, uint8_t minute, uint8_t hour, uint8_t dayOfWeek, uint8_t
+                   dayOfMonth, uint8_t month, uint8_t year)
+{
+  // sets time and date data to DS3231
+  I2C_StartTransmission(I2C1, I2C_Direction_Transmitter, 0x68);
+  I2C_WriteData(I2C1, 0); // set next input to start at the seconds register
+  I2C_WriteData(I2C1, decToBcd(second)); // set seconds
+  I2C_WriteData(I2C1, decToBcd(minute)); // set minutes
+  I2C_WriteData(I2C1, decToBcd(hour)); // set hours
+  I2C_WriteData(I2C1, decToBcd(dayOfWeek)); // set day of week (1=Sunday, 7=Saturday)
+  I2C_WriteData(I2C1, decToBcd(dayOfMonth)); // set date (1 to 31)
+  I2C_WriteData(I2C1, decToBcd(month)); // set month
+  I2C_WriteData(I2C1, decToBcd(year)); // set year (0 to 99)
+  I2C_GenerateSTOP(I2C1, ENABLE);
+}
+
+void readDS3231time(uint8_t *second, uint8_t *minute, uint8_t *hour,
+                    uint8_t *dayOfWeek, uint8_t *dayOfMonth, uint8_t *month, uint8_t *year) {
+  I2C_StartTransmission(I2C1, I2C_Direction_Transmitter, 0x68);
+  I2C_WriteData(I2C1, 0); // set next input to start at the seconds register
+  I2C_GenerateSTOP(I2C1, ENABLE);
+  I2C_StartTransmission(I2C1, I2C_Direction_Receiver, 0x68);
+  // request seven uint8_ts of data from DS3231 starting from register 00h
+  *second = bcdToDec(I2C_ReadData(I2C1) & 0x7f);
+  *minute = bcdToDec(I2C_ReadData(I2C1));
+  *hour = bcdToDec(I2C_ReadData(I2C1) & 0x3f);
+  *dayOfWeek = bcdToDec(I2C_ReadData(I2C1));
+  *dayOfMonth = bcdToDec(I2C_ReadData(I2C1));
+  *month = bcdToDec(I2C_ReadData(I2C1));
+  *year = bcdToDec(I2C_ReadData(I2C1));
+  I2C_AcknowledgeConfig(I2C1, DISABLE);
+  I2C_GenerateSTOP(I2C1, ENABLE);
+}
+
+uint8_t second;
+uint8_t minute;
+uint8_t hour;
+uint8_t dayOfWeek;
+uint8_t dayOfMonth;
+uint8_t month;
+uint8_t year;
+
+char str[15];
+
 int main(void) {
   LCDI2C_init(0x27, 20, 4);
   LCDI2C_backlight();
+  Delay(2000);
   //LCDI2C_write('N');
   init_rcc();
   init_gpio_keypad_clk();
   init_timer_keypad_clk();
   init_gpio_keypad_read();
 
+//setDS3231time(40, 44, 23, 7, 26, 11, 16);
+  readDS3231time(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
+  //bitch();
+  sprintf(str, "%d", minute);
+  LCDI2C_write_String(str);
+  LCDI2C_write_String("finished");
   while(1) {
     __NOP();
   }
