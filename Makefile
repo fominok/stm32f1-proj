@@ -66,6 +66,9 @@ SRC = src/main.c \
   src/I2C.c \
   src/LiquidCrystal_I2C.c \
   src/USART.c \
+  src/kbd.c \
+  src/rtc.c \
+  src/eeprom.c \
 	src/system_stm32f10x.c \
 	lib/STM32F10x_StdPeriph_Driver/src/misc.c \
 	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_adc.c \
