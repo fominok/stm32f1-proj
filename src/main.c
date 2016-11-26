@@ -191,6 +191,28 @@ void readDS3231time(uint8_t *second, uint8_t *minute, uint8_t *hour,
   I2C_GenerateSTOP(I2C1, ENABLE);
 }
 
+uint8_t read_eeprom(uint16_t addr) {
+  uint8_t data;
+  I2C_StartTransmission(I2C1, I2C_Direction_Transmitter, 0x57);
+  I2C_WriteData(I2C1, (uint8_t)(addr >> 8)); // set next input to start at the seconds register
+  I2C_WriteData(I2C1, (uint8_t)(addr & 0xFF)); // set next input to start at the seconds register
+  I2C_GenerateSTOP(I2C1, ENABLE);
+  I2C_StartTransmission(I2C1, I2C_Direction_Receiver, 0x57);
+  data = I2C_ReadData(I2C1);
+  I2C_AcknowledgeConfig(I2C1, DISABLE);
+  I2C_GenerateSTOP(I2C1, ENABLE);
+
+  return data;
+}
+
+void save_eeprom(uint16_t addr, uint8_t data) {
+  I2C_StartTransmission(I2C1, I2C_Direction_Transmitter, 0x57);
+  I2C_WriteData(I2C1, (uint8_t)(addr >> 8)); // set next input to start at the seconds register
+  I2C_WriteData(I2C1, (uint8_t)(addr & 0xFF)); // set next input to start at the seconds register
+  I2C_WriteData(I2C1, data);
+  I2C_GenerateSTOP(I2C1, ENABLE);
+}
+
 uint8_t second;
 uint8_t minute;
 uint8_t hour;
@@ -211,12 +233,20 @@ int main(void) {
   init_timer_keypad_clk();
   init_gpio_keypad_read();
 
-//setDS3231time(40, 44, 23, 7, 26, 11, 16);
-  readDS3231time(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
-  //bitch();
-  sprintf(str, "%d", minute);
+  LCDI2C_write_String("before");
+  Delay(500);
+  save_eeprom(0x1488, 0xEF);
+  Delay(500);
+  uint8_t test;
+  test = read_eeprom(0x1488);
+  sprintf(str, "%d", test);
   LCDI2C_write_String(str);
-  LCDI2C_write_String("finished");
+//setDS3231time(40, 44, 23, 7, 26, 11, 16);
+  //readDS3231time(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
+  ////bitch();
+  //sprintf(str, "%d", minute);
+  //LCDI2C_write_String(str);
+  //LCDI2C_write_String("finished");
   while(1) {
     __NOP();
   }
