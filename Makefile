@@ -58,7 +58,8 @@ STM32_INCLUDES = -Ilib/CMSIS/CM3/DeviceSupport/ST/STM32F10x/ \
 
 OPTIMIZE       = -Os
 
-CFLAGS	= $(MCFLAGS)  $(OPTIMIZE)  $(DEFS) -I. -Iinc -I./ $(STM32_INCLUDES)  -Wl,-T,stm32_flash.ld
+CFLAGS	= $(MCFLAGS)  $(OPTIMIZE)  $(DEFS) -I. -Iinc -I./ $(STM32_INCLUDES) \
+	  -Wl,-T,stm32_flash.ld -Wall -Wextra -Wpedantic
 AFLAGS	= $(MCFLAGS)
 
 SRC = src/main.c \
