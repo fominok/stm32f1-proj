@@ -1,4 +1,5 @@
 #include "rtc.h"
+#include "I2C.h"
 
 uint8_t dec_to_bcd(uint8_t val) {
   return( (val/10*16) + (val%10) );

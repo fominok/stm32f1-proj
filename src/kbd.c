@@ -1,5 +1,8 @@
 #include "kbd.h"
 
+#include "stm32f10x_gpio.h"
+#include "LiquidCrystal_I2C.h"
+
 void init_timer_keypad_clk() {
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
   TIM_TimeBaseInitTypeDef tim_init;

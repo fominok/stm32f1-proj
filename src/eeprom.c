@@ -1,4 +1,5 @@
 #include "eeprom.h"
+#include "I2C.h"
 
 uint8_t read_eeprom(uint16_t addr) {
   uint8_t data;
