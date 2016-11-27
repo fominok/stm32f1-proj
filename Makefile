@@ -8,7 +8,6 @@ export AS=arm-none-eabi-as
 export CP=arm-none-eabi-objcopy
 export OD=arm-none-eabi-objdump
 
-export MCU = cortex-m3
 export MCFLAGS = -mcpu=cortex-m3 -mthumb -mlittle-endian -mthumb-interwork
 export OPTIMIZE = -Os
 export DEFS = -DUSE_STDPERIPH_DRIVER -DSTM32F10X_MD_VL -DHSE_VALUE=8000000
@@ -59,7 +58,7 @@ STM32_INCLUDES = -Ilib/CMSIS/CM3/DeviceSupport/ST/STM32F10x/ \
 	-Ilib/CMSIS/CM3/CoreSupport/ \
 	-Ilib/STM32F10x_StdPeriph_Driver/inc/
 
-CFLAGS = $(DEFS) $(MCFLAGS) $(STM32_INCLUDES) $(OPTIMIZE) -Iinc \
+CFLAGS = $(MCFLAGS) $(OPTIMIZE) $(DEFS) -Iinc $(STM32_INCLUDES) \
 	 -Wall -Wextra -Wpedantic
 
 LD_FLAGS = -lm -lc -lnosys -Wl,-T,stm32_flash.ld
@@ -89,7 +88,7 @@ $(TARGET).bin: $(EXECUTABLE)
 	$(CP) -O binary $^ $@
 
 $(EXECUTABLE): $(OBJ) $(STMLIB)/lib.o $(STARTUP)
-	$(CC) $^ $(LD_FLAGS) -o $@
+	$(CC) $(MCFLAGS) $^ $(LD_FLAGS) -s -o $@
 
 clean:
 	rm -f $(TARGET) $(OBJ) $(TARGET).bin $(EXECUTABLE)
