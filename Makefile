@@ -67,7 +67,6 @@ FILES = main \
 	delay \
 	I2C \
 	LiquidCrystal_I2C \
-	USART \
 	kbd \
 	rtc \
 	eeprom \
