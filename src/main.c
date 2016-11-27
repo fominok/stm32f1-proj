@@ -1,11 +1,12 @@
-#include "stm32f10x.h"
-#include "stm32f10x_gpio.h"
-#include "stm32f10x_rcc.h"
-#include "stm32f10x_tim.h"
 #include "rtc.h"
 #include "eeprom.h"
 #include "kbd.h"
+#include "delay.h"
+#include "LiquidCrystal_I2C.h"
 #include <stdio.h>
+
+// For __NOP()
+#include "stm32f10x_gpio.h"
 
 uint8_t second;
 uint8_t minute;

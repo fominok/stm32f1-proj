@@ -1,5 +1,5 @@
-#include "stm32f10x.h"
-#include "stm32f10x_gpio.h"
-#include "stm32f10x_rcc.h"
-#include "stm32f10x_usart.h"
+#include <stdint.h>
 
+void USART1_Init(void); //Объявление функции инициализации периферии
+void Usart1_Send_symbol(uint8_t); //Объявление функции передачи символа
+void Usart1_Send_String(char* str); //Объявление функции передачи строки

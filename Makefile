@@ -1,12 +1,18 @@
 TARGET=main
 EXECUTABLE=$(TARGET).elf
 
-CC=arm-none-eabi-gcc
-LD=arm-none-eabi-gcc
-AR=arm-none-eabi-ar
-AS=arm-none-eabi-as
-CP=arm-none-eabi-objcopy
-OD=arm-none-eabi-objdump
+export CC=arm-none-eabi-gcc
+export LD=arm-none-eabi-gcc
+export AR=arm-none-eabi-ar
+export AS=arm-none-eabi-as
+export CP=arm-none-eabi-objcopy
+export OD=arm-none-eabi-objdump
+
+export MCFLAGS = -mcpu=cortex-m3 -mthumb -mlittle-endian -mthumb-interwork
+export OPTIMIZE = -Os
+export DEFS = -DUSE_STDPERIPH_DRIVER -DSTM32F10X_MD_VL -DHSE_VALUE=8000000
+
+all: $(TARGET).bin
 
 # Select the appropriate option for your device, the available options are listed below
 # with a description copied from stm32f10x.h
@@ -46,66 +52,50 @@ OD=arm-none-eabi-objdump
 #
 # HSE_VALUE sets the value of the HSE clock, 8MHz in this case 
 
-DEFS = -DUSE_STDPERIPH_DRIVER -DSTM32F10X_MD_VL -DHSE_VALUE=8000000
 STARTUP = lib/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/startup_stm32f10x_md_vl.s
-
-MCU = cortex-m3
-MCFLAGS = -mcpu=$(MCU) -mthumb -mlittle-endian -mthumb-interwork
 
 STM32_INCLUDES = -Ilib/CMSIS/CM3/DeviceSupport/ST/STM32F10x/ \
 	-Ilib/CMSIS/CM3/CoreSupport/ \
 	-Ilib/STM32F10x_StdPeriph_Driver/inc/
 
-OPTIMIZE       = -Os
+CFLAGS = $(MCFLAGS) $(OPTIMIZE) $(DEFS) -Iinc $(STM32_INCLUDES) \
+	 -Wall -Wextra -Wpedantic
 
-CFLAGS	= $(MCFLAGS)  $(OPTIMIZE)  $(DEFS) -I. -Iinc -I./ $(STM32_INCLUDES)  -Wl,-T,stm32_flash.ld
-AFLAGS	= $(MCFLAGS)
+LD_FLAGS = -lm -lc -lnosys -Wl,-T,stm32_flash.ld
 
-SRC = src/main.c \
-	src/delay.c \
-  src/I2C.c \
-  src/LiquidCrystal_I2C.c \
-  src/USART.c \
-  src/kbd.c \
-  src/rtc.c \
-  src/eeprom.c \
-	src/system_stm32f10x.c \
-	lib/STM32F10x_StdPeriph_Driver/src/misc.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_adc.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_bkp.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_can.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_cec.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_crc.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_dac.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_dbgmcu.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_dma.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_exti.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_flash.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_fsmc.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_gpio.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_i2c.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_pwr.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_rcc.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_rtc.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_sdio.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_spi.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_tim.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_usart.c \
-	lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_wwdg.c
+FILES = main \
+	delay \
+	I2C \
+	LiquidCrystal_I2C \
+	USART \
+	kbd \
+	rtc \
+	eeprom \
+	system_stm32f10x
 
-OBJDIR = build
-OBJ = $(SRC:%.c=$(OBJDIR)/%.o) 
-OBJ += Startup.o
+SRC = $(addprefix src/, $(addsuffix .c, $(FILES)))
+OBJ = $(addprefix obj/, $(addsuffix .o, $(FILES)))
 
-all: $(TARGET).bin
+obj/%.o: src/%.c
+	$(CC) $(CFLAGS) $< -c -o $@
+
+STMLIB = lib/STM32F10x_StdPeriph_Driver
+
+$(STMLIB)/lib.o :
+	$(MAKE) -C $(STMLIB) lib.o
 
 $(TARGET).bin: $(EXECUTABLE)
 	$(CP) -O binary $^ $@
 
-$(EXECUTABLE): $(SRC) $(STARTUP)
-	$(CC) $(CFLAGS) $^ -lm -lc -lnosys  -o $@
+$(EXECUTABLE): $(OBJ) $(STMLIB)/lib.o $(STARTUP)
+	$(CC) $(MCFLAGS) $^ $(LD_FLAGS) -s -o $@
 
 clean:
-	rm -f Startup.lst  $(TARGET)  $(TARGET).lst $(OBJ) $(AUTOGEN)  $(TARGET).out  $(TARGET).bin  $(TARGET).map \
-	 $(TARGET).dmp  $(EXECUTABLE)
+	rm -f $(TARGET) $(OBJ) $(TARGET).bin $(EXECUTABLE)
+
+mrproper:
+	$(MAKE) clean
+	$(MAKE) -C lib/STM32F10x_StdPeriph_Driver clean
+
+.PHONY: all clean mrproper
+

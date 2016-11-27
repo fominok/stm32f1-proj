@@ -1,17 +1,10 @@
-#include "stm32f10x.h"
-#include "stm32f10x_gpio.h"
-#include "stm32f10x_rcc.h"
+#include "USART.h"
 #include "stm32f10x_usart.h"
 #include "delay.h"
-#include "USART.h"
 
 //Структуры для инициализации GPIOA и USART1
 GPIO_InitTypeDef    USART_GPIO_InitStruct;
 USART_InitTypeDef    USART_InitStruct;
-
-void USART1_Init(void); //Объявление функции инициализации периферии
-void Usart1_Send_symbol(uint8_t); //Объявление функции передачи символа
-void Usart1_Send_String(char* str); //Объявление функции передачи строки
 
 //Функция инициализации периферии
 void USART1_Init(void)

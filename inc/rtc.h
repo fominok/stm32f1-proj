@@ -1,7 +1,6 @@
 #ifndef rtc_header
 #define rtc_header
-
-#include "I2C.h"
+#include <stdint.h>
 
 uint8_t dec_to_bcd(uint8_t val);
 uint8_t bcd_to_dec(uint8_t val);
