@@ -3,6 +3,9 @@
 #include "stm32f10x_gpio.h"
 #include "LiquidCrystal_I2C.h"
 
+extern uint8_t digits_entered;
+extern uint32_t ticks_passed;
+
 void init_timer_keypad_clk() {
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
   TIM_TimeBaseInitTypeDef tim_init;
@@ -73,39 +76,40 @@ void init_gpio_keypad_read() {
   NVIC_Init(&nvic_init_kp);
 }
 
-uint16_t state = 0;
+uint16_t state_kbd = 0;
 uint16_t row = 0;
 
 void TIM2_IRQHandler() {
   if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
     TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+    ticks_passed++;
     if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_5) ||
        GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_6) ||
        GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7) ||
        GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_8)
        ) return;
 
-    row = state;
-    switch (state) {
+    row = state_kbd;
+    switch (state_kbd) {
     case 0:
       GPIO_SetBits(GPIOA, GPIO_Pin_0);
       GPIO_ResetBits(GPIOA, GPIO_Pin_3);
-      state = 1;
+      state_kbd = 1;
       break;
     case 1:
       GPIO_SetBits(GPIOA, GPIO_Pin_1);
       GPIO_ResetBits(GPIOA, GPIO_Pin_0);
-      state = 2;
+      state_kbd = 2;
       break;
     case 2:
       GPIO_SetBits(GPIOA, GPIO_Pin_2);
       GPIO_ResetBits(GPIOA, GPIO_Pin_1);
-      state = 3;
+      state_kbd = 3;
       break;
     case 3:
       GPIO_SetBits(GPIOA, GPIO_Pin_3);
       GPIO_ResetBits(GPIOA, GPIO_Pin_2);
-      state = 0;
+      state_kbd = 0;
       break;
 
     }
@@ -123,20 +127,28 @@ void EXTI9_5_IRQHandler() {
   if (EXTI_GetITStatus(EXTI_Line5) != RESET) {
     EXTI_ClearITPendingBit(EXTI_Line5);
     if (row == 3) return; // broken asterisk on my keypad
-    if (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_5)) return;
+    if ((ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_5))) return;
     LCDI2C_write(keypad[row][0]);
+    ticks_passed = 0;
+    digits_entered++;
   } else if (EXTI_GetITStatus(EXTI_Line6) != RESET) {
     EXTI_ClearITPendingBit(EXTI_Line6);
-    if (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_6)) return;
+    if ((ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_6))) return;
     LCDI2C_write(keypad[row][1]);
+    ticks_passed = 0;
+    digits_entered++;
   } else if (EXTI_GetITStatus(EXTI_Line7) != RESET) {
     EXTI_ClearITPendingBit(EXTI_Line7);
-    if (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7)) return;
+    if ((ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7))) return;
     if (row == 3) return; // broken hash on my keypad
     LCDI2C_write(keypad[row][2]);
+    ticks_passed = 0;
+    digits_entered++;
   } else if (EXTI_GetITStatus(EXTI_Line8) != RESET) {
     EXTI_ClearITPendingBit(EXTI_Line8);
-    if (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_8)) return;
+    if ((ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_8))) return;
     LCDI2C_write(keypad[row][3]);
+    ticks_passed = 0;
+    digits_entered++;
   }
 }
