@@ -5,6 +5,7 @@
 
 extern uint8_t digits_entered;
 extern uint32_t ticks_passed;
+extern uint8_t input_buffer[4];
 
 void init_timer_keypad_clk() {
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
@@ -116,7 +117,7 @@ void TIM2_IRQHandler() {
   }
 }
 
-char keypad[4][4] = {
+uint8_t keypad[4][4] = {
   {'1', '2', '3', 'A'},
   {'4', '5', '6', 'B'},
   {'7', '8', '9', 'C'},
@@ -129,26 +130,26 @@ void EXTI9_5_IRQHandler() {
     if (row == 3) return; // broken asterisk on my keypad
     if ((ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_5))) return;
     LCDI2C_write(keypad[row][0]);
+    input_buffer[digits_entered++] = keypad[row][0];
     ticks_passed = 0;
-    digits_entered++;
   } else if (EXTI_GetITStatus(EXTI_Line6) != RESET) {
     EXTI_ClearITPendingBit(EXTI_Line6);
     if ((ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_6))) return;
     LCDI2C_write(keypad[row][1]);
+    input_buffer[digits_entered++] = keypad[row][1];
     ticks_passed = 0;
-    digits_entered++;
   } else if (EXTI_GetITStatus(EXTI_Line7) != RESET) {
     EXTI_ClearITPendingBit(EXTI_Line7);
     if ((ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7))) return;
     if (row == 3) return; // broken hash on my keypad
     LCDI2C_write(keypad[row][2]);
+    input_buffer[digits_entered++] = keypad[row][2];
     ticks_passed = 0;
-    digits_entered++;
   } else if (EXTI_GetITStatus(EXTI_Line8) != RESET) {
     EXTI_ClearITPendingBit(EXTI_Line8);
     if ((ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_8))) return;
     LCDI2C_write(keypad[row][3]);
+    input_buffer[digits_entered++] = keypad[row][3];
     ticks_passed = 0;
-    digits_entered++;
   }
 }
