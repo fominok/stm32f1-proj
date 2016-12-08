@@ -81,6 +81,9 @@ obj/%.o: src/%.c
 
 STMLIB = lib/STM32F10x_StdPeriph_Driver
 
+flash: $(TARGET).bin
+	st-flash write $(TARGET).bin 0x08000000
+
 $(STMLIB)/lib.o :
 	$(MAKE) -C $(STMLIB) lib.o
 
