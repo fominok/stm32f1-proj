@@ -54,16 +54,20 @@ void read_log(uint8_t cursor) {
   uint8_t year = read_eeprom(record_base_addr + 7);
   Delay(50);
 
-  sprintf(output_buffer,
-          "%d %d %d %d %d %d %d %d",
-          input_status,
-          second,
-          minute,
-          hour,
-          dayOfWeek,
-          dayOfMonth,
-          month,
-          year
-  );
+  LCDI2C_setCursor(0, 0);
+  sprintf(output_buffer, "%d: ", cursor);
+  LCDI2C_write_String(output_buffer);
+  if (input_status == 0) LCDI2C_write_String(     "Succeed  ");
+  else if (input_status == 1) LCDI2C_write_String("Failed   ");
+  else if (input_status == 2) LCDI2C_write_String("Cancelled");
+  else {
+    LCDI2C_write_String("No data");
+    LCDI2C_setCursor(0, 1);
+    LCDI2C_write_String("                   ");
+    return;
+  }
+  LCDI2C_setCursor(0, 1);
+  sprintf(output_buffer, "%02d:%02d:%02d %02d-%02d-%02d", hour, minute, second, dayOfMonth, month, year);
+
   LCDI2C_write_String(output_buffer);
 }

@@ -6,7 +6,6 @@
 #include "LiquidCrystal_I2C.h"
 #include <stdio.h>
 
-// For __NOP()
 #include "stm32f10x_gpio.h"
 
 #define CODE_BASE_ADDR 0x0000
@@ -35,6 +34,8 @@ typedef enum {
 
 state_t state = IDLE;
 uint8_t real_code_buf[4];
+uint8_t log_view_cursor;
+uint8_t redraw_log;
 
 void write_code() {
   for (int i = 0; i < 4; i++) {
@@ -154,10 +155,13 @@ void automaton(void) {
         LCDI2C_setCursor(19, 1);
         LCDI2C_write_String("A") ;
         LCDI2C_setCursor(19, 2);
-        LCDI2C_write_String("D") ;
+        LCDI2C_write_String("B") ;
         LCDI2C_setCursor(19, 3);
         LCDI2C_write_String("V") ;
         state = SERVICE_LOG_VIEW;
+        log_view_cursor = read_eeprom(LOGS_CURSOR_ADDR);
+        Delay(50);
+        redraw_log = 1;
       }
       digits_entered = 0;
     }
@@ -170,9 +174,19 @@ void automaton(void) {
     }
     break;
   case SERVICE_LOG_VIEW:
+    if (redraw_log) {
+      read_log(log_view_cursor);
+      redraw_log = 0;
+    }
     if (digits_entered > 0) {
       if (input_buffer[0] == '0') {
         idle();
+      } else if (input_buffer[0] == 'A') {
+        log_view_cursor++;
+        redraw_log = 1;
+      } else if (input_buffer[0] == 'B') {
+        log_view_cursor--;
+        redraw_log = 1;
       }
       digits_entered = 0;
     }
@@ -192,14 +206,9 @@ int main(void) {
   read_code();
   state = IDLE;
   digits_entered = 0x0;
-  //for (int i=0; i<20; i++) {
-  //  LCDI2C_setCursor(0,0);
-  //  read_log(i);
-  //  Delay(2000);
-  //}
   idle();
   while(1) {
     automaton();
-    Delay(200);
+    Delay(50);
   }
 }
