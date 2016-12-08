@@ -35,13 +35,20 @@ typedef enum {
 state_t state = IDLE;
 uint8_t real_code_buf[4];
 
-void init_gpio_led() {
+void init_gpio_service_and_led() {
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+
   GPIO_InitTypeDef gpio_init_led_out;
   gpio_init_led_out.GPIO_Speed = GPIO_Speed_2MHz;
   gpio_init_led_out.GPIO_Mode = GPIO_Mode_Out_PP;
   gpio_init_led_out.GPIO_Pin = GPIO_Pin_1;
   GPIO_Init(GPIOB, &gpio_init_led_out);
+
+  GPIO_InitTypeDef gpio_init_service_in;
+  gpio_init_service_in.GPIO_Speed = GPIO_Speed_2MHz;
+  gpio_init_service_in.GPIO_Mode = GPIO_Mode_IPU;
+  gpio_init_service_in.GPIO_Pin = GPIO_Pin_0;
+  GPIO_Init(GPIOB, &gpio_init_service_in);
 }
 
 void lightning() {
@@ -58,6 +65,8 @@ void automaton(void) {
   case IDLE:
     if (digits_entered > 0) {
       state = CODE_INPUT;
+    } else if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0) == 0) {
+      state = SERVICE_MODE;
     }
     break;
   case CODE_INPUT:
@@ -86,7 +95,7 @@ void automaton(void) {
       prevent_kb = 0;
     } else {
       LCDI2C_clear();
-      LCDI2C_setCursor(2, 1);
+      LCDI2C_setCursor(4, 1);
       LCDI2C_write_String("ACCESS DENIED") ;
       write_log(STATUS_FAILED);
       prevent_kb = 1;
@@ -98,6 +107,15 @@ void automaton(void) {
     digits_entered = 0;
     state = IDLE;
     break;
+  case SERVICE_MODE:
+    LCDI2C_clear();
+    LCDI2C_setCursor(4, 1);
+    LCDI2C_write_String("SERVICE MODE") ;
+    LCDI2C_setCursor(5, 2);
+    LCDI2C_write_String("A - new code") ;
+    LCDI2C_setCursor(5, 3);
+    LCDI2C_write_String("B - logs") ;
+    break;
   }
 }
 
@@ -108,7 +126,7 @@ int main(void) {
   init_gpio_keypad_clk();
   init_timer_keypad_clk();
   init_gpio_keypad_read();
-  init_gpio_led();
+  init_gpio_service_and_led();
 
   real_code_buf[0] = read_eeprom(CODE_BASE_ADDR);
   Delay(50);
