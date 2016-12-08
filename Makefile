@@ -69,6 +69,7 @@ FILES = main \
 	LiquidCrystal_I2C \
 	kbd \
 	rtc \
+	logger \
 	eeprom \
 	system_stm32f10x
 

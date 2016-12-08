@@ -6,6 +6,7 @@
 extern uint8_t digits_entered;
 extern uint32_t ticks_passed;
 extern uint8_t input_buffer[4];
+extern uint8_t prevent_kb;
 
 void init_timer_keypad_clk() {
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
@@ -128,27 +129,27 @@ void EXTI9_5_IRQHandler() {
   if (EXTI_GetITStatus(EXTI_Line5) != RESET) {
     EXTI_ClearITPendingBit(EXTI_Line5);
     if (row == 3) return; // broken asterisk on my keypad
-    if ((ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_5))) return;
-    LCDI2C_write(keypad[row][0]);
+    if ((prevent_kb) || (ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_5))) return;
+    LCDI2C_write('*');
     input_buffer[digits_entered++] = keypad[row][0];
     ticks_passed = 0;
   } else if (EXTI_GetITStatus(EXTI_Line6) != RESET) {
     EXTI_ClearITPendingBit(EXTI_Line6);
-    if ((ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_6))) return;
-    LCDI2C_write(keypad[row][1]);
+    if ((prevent_kb) || (ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_6))) return;
+    LCDI2C_write('*');
     input_buffer[digits_entered++] = keypad[row][1];
     ticks_passed = 0;
   } else if (EXTI_GetITStatus(EXTI_Line7) != RESET) {
     EXTI_ClearITPendingBit(EXTI_Line7);
-    if ((ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7))) return;
+    if ((prevent_kb) || (ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7))) return;
     if (row == 3) return; // broken hash on my keypad
-    LCDI2C_write(keypad[row][2]);
+    LCDI2C_write('*');
     input_buffer[digits_entered++] = keypad[row][2];
     ticks_passed = 0;
   } else if (EXTI_GetITStatus(EXTI_Line8) != RESET) {
     EXTI_ClearITPendingBit(EXTI_Line8);
-    if ((ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_8))) return;
-    LCDI2C_write(keypad[row][3]);
+    if ((prevent_kb) || (ticks_passed < 16) || (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_8))) return;
+    LCDI2C_write('*');
     input_buffer[digits_entered++] = keypad[row][3];
     ticks_passed = 0;
   }
