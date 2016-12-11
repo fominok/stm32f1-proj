@@ -25,7 +25,7 @@ typedef enum {
   LOG_CANCELLED,
   CODE_CHECK,
   LOG_SUCCEED,
-  DOOR_OPEN,
+  //DOOR_OPEN,
   LOG_FAILED,
   SERVICE_MODE,
   SERVICE_CODE_INPUT,
@@ -117,23 +117,29 @@ void automaton(void) {
     idle();
     break;
   case CODE_CHECK:
+    prevent_kb = 1;
     if (!memcmp(real_code_buf, input_buffer, 4)) {
-      LCDI2C_clear();
-      LCDI2C_setCursor(9, 1);
-      LCDI2C_write_String("OK") ;
-      write_log(STATUS_SUCCEED);
-      prevent_kb = 1;
-      lightning();
-      prevent_kb = 0;
-    } else {
-      LCDI2C_clear();
-      LCDI2C_setCursor(4, 1);
-      LCDI2C_write_String("ACCESS DENIED") ;
-      write_log(STATUS_FAILED);
-      prevent_kb = 1;
-      Delay(3000);
-      prevent_kb = 0;
+      state = LOG_SUCCEED;
+      } else {
+      state = LOG_FAILED;
     }
+    break;
+  case LOG_SUCCEED:
+    LCDI2C_clear();
+    LCDI2C_setCursor(9, 1);
+    LCDI2C_write_String("OK") ;
+    write_log(STATUS_SUCCEED);
+    lightning();
+    prevent_kb = 0;
+    idle();
+    break;
+  case LOG_FAILED:
+    LCDI2C_clear();
+    LCDI2C_setCursor(4, 1);
+    LCDI2C_write_String("ACCESS DENIED") ;
+    write_log(STATUS_FAILED);
+    Delay(3000);
+    prevent_kb = 0;
     idle();
     break;
   case SERVICE_MODE:
